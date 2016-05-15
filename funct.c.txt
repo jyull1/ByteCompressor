@@ -1,0 +1,109 @@
+/*Author: Joseph Yull
+ *
+ * Created on 3/10/2016
+ * Last Modified 3/10/2016
+ *
+ * Purpose: To practice arbitrary division of files for learning value. Contains functions to print
+ *          arrays and capture user input.
+ *
+ * Algorithm:
+ *      a) No main. GetNums is the dominant function.
+ *      b) Prompt user for number of integers.
+ *      c) Allocate integer array of size equal to user inputted number.
+ *      d) Ask user for numbers to enter in each index of the array.
+ * 
+ *************************************************************************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX     255
+#define MIN     0
+
+ /*************************************************************************************************
+* Description: This function captures user input to define the size of an integer array, and then
+                to fill the array with values. Rejects values greater than 255, and flips the sign
+                of negative numbers gretaer than -255. Returns length of the integer array.
+* Input:        int** rawNums: a pointer to an int pointer, which will be allocated into an integer
+                              array. Must be a pointer to a pointer, or a memory leak will be created.
+* Output:       int** rawNums: not returned, but it will be allocated and filled with values by the function.
+*               int numInts: size of rawNums array.
+*
+* Variables used:
+*               int noInpt: a boolean set to 0 when the user gives a correct integer length (1-16)
+*               
+*         
+* 
+* Last Modified: 3/10/2016
+*************************************************************************************************/
+
+int getNums(int** rawNums) //Passes pointer by reference
+{
+    int noInpt = 1, numInts;
+
+    //Collects size of integer array
+    while(noInpt)
+    {
+       printf("Enter the number of integers to be saved:");
+       scanf("%d", &numInts);
+       __fpurge(stdin);
+       if(numInts < 1 || numInts > 16)
+       {
+           printf("Sorry, that was incorrect. Please try again.\n");
+       }
+       else
+       {
+           noInpt = !noInpt;
+       }
+    }
+
+    //Allocates and fills rawNums
+    int counter = 0;
+    *rawNums = (int*)malloc(numInts*sizeof(int));
+    while(counter < numInts)
+    {
+        //Protects input greater than 255 or less than 0
+        noInpt = 1;
+        while(noInpt){
+            printf("Please enter an integer 0-255 for integer #%d\n", counter);
+            scanf("%d", (*rawNums+counter));
+            __fpurge(stdin);
+
+            if(*(*rawNums+counter) < MIN)
+            {
+                *(*rawNums+counter)  *= -1;
+            }
+
+            if(*(*rawNums+counter) > MAX)
+            {
+                printf("Sorry, you entered a number with absolute value larger than 255.\n");
+            }
+
+            else
+            {
+                noInpt = 0;
+            }
+        }
+        counter++;
+    }
+    return numInts;
+}
+
+ /*************************************************************************************************
+* Description: Prints a given array.
+* Input:        int* nums: address of the array to be printed.
+*               int size: size of the array to be printed.
+* Output:       None. Integers will be printed directly to the shell.
+
+* Last Modified: 3/08/2016
+*************************************************************************************************/
+
+void printArr(int* nums, int size)
+{
+    printf("\nNumbers in array:\n");
+    int i;
+    for(i=0;i<size;i++)
+    {
+        printf("%d\n", *(nums+i));
+    }
+}

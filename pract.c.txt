@@ -1,0 +1,223 @@
+/*Author: Joseph Yull
+ *
+ * Created on 3/7/2016
+ * Last Modified 3/10/2016
+ *
+ * Purpose: To practice byte manipulation and bitwise operators for use in compression. This program
+ *          reads in a miximum of 16 integers from the user. It compresses those integers into unsigned
+ *           integers four at a time, prints the resulting unsigned integers, and unpacks the original
+ *           integers again.
+ *
+ * Algorithm:
+ *      a) Read in 1-16 integers from a user, each with values 0-255.
+ *      b) Stores integers in an integer array.
+ *      c) Creates an array of 1-4 unsigned integers, based on how many integers the user entered:
+ *          c1) For example, 9 integers entered results in an array of 3 unsigned integers.
+ *      d) Store each integer into ONE BYTE of the unsigned integer.
+ *      e) Print unsigned integer array in decimal & hexadecimal.
+ *      f) Extract each byte from each unsigned int into a new integer array, "unpacking" the compressed data.
+ * 
+ *************************************************************************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+
+void printHex(unsigned int numIn);
+
+/*************************************************************************************************
+* Description: This function takes an array of integers (rawData) with values from 0-255, the array's size (size), and packs
+*               the integers into an array of unsigned integers. Each unsigned integer contains 4
+*               integers from rawData, one in each byte.
+* Input:        int* rawData: an array of integers from 0-255 to be compressed. Values over or
+*                   under the range will cause unpredictable behavior.
+*               int size: The length of rawData. Sizes larger than 16 will causes data loss in
+                    the packing.
+                int* compSize: an integer passed from outside the function. Will contain the size
+                    of the COMPRESSED array of unsigned ints.
+* Output:       unsigned int* packData: array of unsigned ints containing byte data of rawData.
+*
+* Variables used:
+*               int j: The index of packData, incremented whenever a new unsigned int is needed
+*         
+* 
+* Last Modified: 3/10/2016
+*************************************************************************************************/
+unsigned int* pack(int* rawData, int size, int* compSize)
+{
+    unsigned int* packData;
+
+    //Determines how many unsigned ints are necessary
+    //1 integer
+    if(size < 5)
+    {
+        packData = (unsigned int*)malloc(sizeof(unsigned int));
+        printf("Memory allocated: %d\n", sizeof(unsigned int));
+    }
+    //2 integers
+    else if(size < 9)
+    {
+        packData = (unsigned int*)malloc(sizeof(unsigned int) << 1);
+        printf("Memory allocated: %d\n", (sizeof(unsigned int) << 1));
+    }
+    //3 integers
+    else if(size < 13)
+    {
+        packData = (unsigned int*)malloc(((sizeof(unsigned int) << 2))-(sizeof(unsigned int)));
+        printf("Memory allocated: %d\n", (((sizeof(unsigned int) << 2))-(sizeof(unsigned int))));
+    }
+    //4 integers
+    else
+    {
+        packData = (unsigned int*)malloc(sizeof(unsigned int) << 2);
+        printf("Memory allocated: %d\n", sizeof(unsigned int) << 2);
+    }
+
+    //Compression happens here
+    int i, j=0;
+    for(i = 0; i<size; i++)
+    {
+        *(packData+j) <<= 8;
+        *(packData+j) |= *(rawData+i);
+
+        if((i&3) == 3)
+        {
+                j++;
+        }
+    }
+
+    //Shifts leftover packed bytes to the leftmost bit
+    int exShifts = 4 - (size&3);
+    for(i=0; i<exShifts; i++)
+    {
+        *(packData+j) <<= 8;
+    }
+
+    //Prints packed numbers in decimal
+    if(!(size&3))
+    {
+        *compSize = size/4;
+    }
+    else
+    {
+        *compSize = (size/4)+1;
+    }
+    for(i = 0; i<*compSize; i++)
+    {
+        printf("%u\n",*(packData+i));
+    }
+
+    //Prints packed numbers in hexadecimal
+    printf("\n\nHex format:");
+    for(i = 0; i<*compSize; i++)
+    {
+        printHex(*(packData+i));
+    }
+
+    return packData;
+}
+
+/*************************************************************************************************
+* Description: This function prints the hexadecimal form of an unsigned int (numIn).
+* Input:        unsigned int numIn: the integer to be converted into hexadecimal.
+* Output:       Nothing returned. All output is printed directly to the shell window.
+*
+* Variables used:
+*               int dig: Calculated as the result of numIn % 16. Adding this number to '0' or 'a' will
+                        provide the hexadecimal character corresponding to this digit.
+                char output[8]: Holds the hexadecimal digits to be output on the shell. Stores digits
+                        in reverse order.
+*         
+* 
+* Last Modified: 3/10/2016
+*************************************************************************************************/
+
+void printHex(unsigned int numIn)
+{
+  int i = 0, dig;
+  char output[8];
+
+  do{
+    dig = numIn&15;
+    if(dig < 10)
+    {
+      *(output+(i++)) = dig + '0';
+    }
+    else
+    {
+      *(output+(i++)) = dig + 'a'- 10;
+    }
+  }while((numIn>>=4)!=0);
+
+  putchar('\n');
+  putchar('0');
+  putchar('x');
+
+  do{
+    putchar(*(output+(i--)));
+  }while(i>-1);
+
+  putchar('\n');
+
+}
+
+/*************************************************************************************************
+* Description: This function unpacks integer data compressed in an array of unsigned integers.
+* Input:        unsigned int* packData: these unsigned ints contain data for four integers per
+                                        unsigned int.
+* Output:       Nothing returned. Unpacked integers are outputted directly to the shell.
+*
+* Variables used: int* unpackData: Contains all integers 0-255 extracted from packData. Freed at
+*                                   the end of the program.
+*         
+* 
+* Last Modified: 3/10/2016
+*************************************************************************************************/
+
+void unpack(unsigned int* packData, int packSize)
+{
+        int i, j;
+        fprintf(stderr, "%d\n", packData[0]);
+        int* unpackData = (int*)malloc((packSize<<2)*sizeof(int));
+
+        for(i=0; i<packSize;i++)
+        {
+                for(j=0; j<4; j++)
+                {
+                        *(unpackData+(i*4)+j) = *(packData+i) & 255;
+                        *(packData+i) >>= 8;
+                }
+        }
+
+        printf("\n\nUnpacked integers:\n");
+
+        printArr(unpackData, packSize<<2);
+
+        free(unpackData);
+}
+
+int main()
+{
+    int* rawNums;
+    int length;
+    int packSize;
+    unsigned int* packInts;
+    char cont = '0';
+
+    while(cont!='Y' && cont!='y'){
+    length = getNums(&rawNums);
+    printArr(rawNums, length);
+    packInts = pack(rawNums, length, &packSize);
+    printf("\nPackSize value: %d\n", packSize);
+    unpack(packInts, packSize);
+     printf("\nPackSize value: %d\n", packSize);
+
+
+    printf("Would you like to terminate the application? (Y/y):");
+    scanf(" %c", &cont);
+    __fpurge(stdin);
+    }
+    free(rawNums);
+    free(packInts);
+
+    return 0;
